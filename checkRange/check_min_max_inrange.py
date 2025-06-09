@@ -17,8 +17,8 @@ SELECT f_device,
        f_temp AS temp,
        f_rate AS rate,
        f_time
-FROM dj_data
-WHERE f_time > '2025-05-05' AND f_time < '2025-06-08'
+FROM dj_data2
+WHERE f_time > '2025-05-05' AND f_time < '2025-06-05'
 '''
 df = pd.read_sql(query, engine)
 

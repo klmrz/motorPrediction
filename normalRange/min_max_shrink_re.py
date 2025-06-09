@@ -37,7 +37,7 @@ GROUP BY f_device
 """
 bounds_df = pd.read_sql(query_bounds, engine)
 
-# 内缩逻辑：先缩 min，再缩 max，分别逐步进行
+# 内缩逻辑：确保每次内缩后的数据占比大于 95%
 def shrink_ranges(bounds_df, raw_df, step=0.05, threshold=0.95):
     params = ['amp', 'vol', 'temp', 'rate']
     results = []
@@ -57,10 +57,11 @@ def shrink_ranges(bounds_df, raw_df, step=0.05, threshold=0.95):
                 if new_min >= max_p:
                     break
                 ratio = device_data[p].between(new_min, max_p).mean()
+                # 确保每次收缩后的数据覆盖比例 >= 95%
                 if ratio >= threshold:
                     min_p = new_min
                 else:
-                    break
+                    break  # 如果覆盖比例小于95%，则停止收缩
 
             # Step 2：再收缩 max 值
             while True:
@@ -68,11 +69,13 @@ def shrink_ranges(bounds_df, raw_df, step=0.05, threshold=0.95):
                 if min_p >= new_max:
                     break
                 ratio = device_data[p].between(min_p, new_max).mean()
+                # 确保每次收缩后的数据覆盖比例 >= 95%
                 if ratio >= threshold:
                     max_p = new_max
                 else:
-                    break
+                    break  # 如果覆盖比例小于95%，则停止收缩
 
+            # 将最终范围存储到结果中
             result[f'final_min_{p}'] = round(min_p, 3)
             result[f'final_max_{p}'] = round(max_p, 3)
 
