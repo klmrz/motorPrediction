@@ -7,7 +7,7 @@ engine = create_engine(db_url)
 
 # 读取最终范围文件
 #range_df = pd.read_csv('motor_final_ranges.csv')
-range_df = pd.read_csv("F:/Work/NewProject/PredictNormalRange/normalRange/min_max_ranges.csv")
+range_df = pd.read_csv("E:/Work/NewProject/motorPrediction/normalRange/min_max_ranges.csv")
 
 # 查询历史数据
 query = '''
@@ -17,7 +17,8 @@ SELECT f_device,
        f_temp AS temp,
        f_rate AS rate,
        f_time
-FROM dj_data2
+FROM dj_data
+WHERE f_time > '2025-05-05' AND f_time < '2025-06-08'
 '''
 df = pd.read_sql(query, engine)
 
