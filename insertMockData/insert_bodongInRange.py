@@ -19,12 +19,13 @@ latest_time_query = '''
 latest_times = pd.read_sql(latest_time_query, engine)
 
 # 生成更高频的波动曲线（五段波动）
-def generate_fluctuating_series(start, peak1, trough, peak2, exceed_value, steps):
+def generate_fluctuating_series(start, peak1, trough, peak2, exceed_value, steps, min_limit, max_limit):
     # 使用sin/cos函数模拟曲线波动
     x = np.linspace(0, 2 * np.pi, steps)
     series = start + (peak1 - start) * (np.sin(x) + 1) / 2
     series[steps // 5: 2 * steps // 5] = trough + (peak2 - trough) * (np.sin(x[steps // 5: 2 * steps // 5]) + 1) / 2
-    series[-1] = exceed_value  # 最后一条数据超过最大值或最小值（异常）
+    series = np.clip(series, min_limit, max_limit)  # 确保波动值不超出正常范围
+    series[-1] = np.clip(exceed_value, min_limit, max_limit)  # 最后一条数据确保不超出正常范围
     return series
 
 # 模拟参数设置
@@ -53,36 +54,36 @@ for i in range(1, 8):
 
     # 生成波动数据（每个电机 3 天的模拟数据）
     amps = generate_fluctuating_series(base_amp, base_amp * 1.05, base_amp * 0.98, base_amp * 1.1,
-                                       range_row['final_max_amp'] + 0.05, steps=points)
+                                       range_row['final_max_amp'] + 0.05, steps=points,
+                                       min_limit=range_row['final_min_amp'], max_limit=range_row['final_max_amp'])
     rates = generate_fluctuating_series(base_rate, base_rate * 1.05, base_rate * 0.98, base_rate * 1.1,
-                                        range_row['final_max_rate'] + 0.5, steps=points)
+                                        range_row['final_max_rate'] + 0.5, steps=points,
+                                        min_limit=range_row['final_min_rate'], max_limit=range_row['final_max_rate'])
     temps = generate_fluctuating_series(base_temp, base_temp * 1.05, base_temp * 0.98, base_temp * 1.1,
-                                        range_row['final_max_temp'] + 1.0, steps=points)
+                                        range_row['final_max_temp'] + 1.0, steps=points,
+                                        min_limit=range_row['final_min_temp'], max_limit=range_row['final_max_temp'])
     vols = generate_fluctuating_series(base_vol, base_vol * 0.97, base_vol * 1.01, base_vol * 0.95,
-                                       range_row['final_min_vol'] - 1.0, steps=points)
+                                       range_row['final_min_vol'] - 1.0, steps=points,
+                                       min_limit=range_row['final_min_vol'], max_limit=range_row['final_max_vol'])
 
     # 构造波动数据，每2秒钟生成一条数据
     for j in range(points):
         amp, rate, temp, vol = amps[j], rates[j], temps[j], vols[j]
 
-        # 每5分钟数据变化较小，直到第5分钟开始波动
-        if j % 300 == 0:  # 5分钟变化后，开始发生波动
-            amp += np.random.uniform(-0.01, 0.01)
-            rate += np.random.uniform(-0.01, 0.01)
-            temp += np.random.uniform(-0.1, 0.1)
-            vol += np.random.uniform(-0.05, 0.05)
-
-        # 判断是否超出范围（超过正常范围则为异常数据）
-        f_alarm = int(
-            (amp > range_row['final_max_amp']) or
-            (rate > range_row['final_max_rate']) or
-            (temp > range_row['final_max_temp']) or
-            (vol < range_row['final_min_vol'])
-        )
+        # 模拟波动，直到最后一段（几分钟后）开始出现异常
+        if j > points - 300:  # 假设最后300个点为异常数据
+            # 逐渐超出正常范围并保持异常
+            amp = min(amp + np.random.uniform(0.05, 0.1), range_row['final_max_amp'] + 0.1)  # 超过最大值
+            rate = min(rate + np.random.uniform(0.05, 0.1), range_row['final_max_rate'] + 1)  # 超过最大值
+            temp = min(temp + np.random.uniform(0.1, 0.2), range_row['final_max_temp'] + 1)  # 超过最大值
+            vol = max(vol - np.random.uniform(0.05, 0.1), range_row['final_min_vol'] - 0.1)  # 低于最小值
+            f_alarm = 1  # 标记为异常
+        else:
+            f_alarm = 0  # 标记为正常
 
         abnormal_data.append({
             'f_device': motor_id,
-            'f_err_code': str(0),
+            'f_err_code': str(0),  # 将 f_err_code 转为字符串类型
             'f_run_signal': 4,
             'f_time': start_time + timedelta(seconds=j * sampling_interval),
             'f_amp': round(amp, 3),
