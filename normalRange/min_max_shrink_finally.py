@@ -15,7 +15,7 @@ SELECT
     f_rate AS rate,
     f_time
 FROM dj_data2
-WHERE f_time > '2025-05-05' AND f_time < '2025-06-05'
+WHERE f_time > '2025-05-07' AND f_time < '2025-06-15'
 """
 raw_df = pd.read_sql(query_raw, engine)
 
@@ -32,7 +32,7 @@ SELECT
   MIN(f_rate) AS min_rate,
   MAX(f_rate) AS max_rate
 FROM dj_data2
-WHERE f_time > '2025-05-05' AND f_time < '2025-06-05'
+WHERE f_time > '2025-05-07' AND f_time < '2025-06-15'
 GROUP BY f_device
 """
 bounds_df = pd.read_sql(query_bounds, engine)
@@ -87,5 +87,5 @@ def shrink_ranges(bounds_df, raw_df, step=0.05, threshold=0.95):
 final_df = shrink_ranges(bounds_df, raw_df)
 
 # 保存结果
-final_df.to_csv("min_max_ranges.csv", index=False)
-print("已保存到 min_max_ranges.csv")
+final_df.to_csv("min_max_ranges_after.csv", index=False)
+print("已保存到 min_max_ranges_after.csv")

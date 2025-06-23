@@ -6,8 +6,10 @@ db_url = 'postgresql://dbreader:db%40123456@117.72.55.146:1012/postgres'
 engine = create_engine(db_url)
 
 # 读取最终范围文件
-#range_df = pd.read_csv('motor_final_ranges.csv')
-range_df = pd.read_csv("E:/Work/NewProject/motorPrediction/normalRange/min_max_ranges.csv")
+
+
+#range_df = pd.read_csv('motor_final_ranges.csv')  F:/Work/NewProject/motorPrediction/normalRange
+range_df = pd.read_csv("F:/Work/NewProject/motorPrediction/normalRange/min_max_ranges_after.csv")
 
 # 查询历史数据
 query = '''
@@ -18,7 +20,7 @@ SELECT f_device,
        f_rate AS rate,
        f_time
 FROM dj_data2
-WHERE f_time > '2025-05-05' AND f_time < '2025-06-05'
+WHERE f_time > '2025-05-07' AND f_time < '2025-06-15'
 '''
 df = pd.read_sql(query, engine)
 
@@ -60,5 +62,5 @@ for _, row in range_df.iterrows():
 
 # 生成验证结果
 result_df = pd.DataFrame(results)
-result_df.to_csv("check_min_max_inRange.csv", index=False, encoding="utf-8-sig")
-print("验证结果已保存为 check_min_max_inRange.csv")
+result_df.to_csv("check_min_max_inRange_after.csv", index=False, encoding="utf-8-sig")
+print("验证结果已保存为 check_min_max_inRange_after.csv")

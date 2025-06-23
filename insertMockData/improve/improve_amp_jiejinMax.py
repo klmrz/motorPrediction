@@ -20,7 +20,7 @@ range_df = pd.read_csv("F:/Work/NewProject/motorPrediction/normalRange/min_max_r
 # 获取每台电机的最新数据时间
 latest_times = pd.read_sql('''
                            SELECT f_device, MAX(f_time) as latest_time
-                           FROM dj_mock_data
+                           FROM dj_mock_data_ver2
                            GROUP BY f_device
                            ''', engine)
 
@@ -28,7 +28,7 @@ name_mapping = pd.read_sql('''
     SELECT 
         f_device, 
         MAX(f_name) as f_name
-    FROM dj_mock_data
+    FROM dj_mock_data_ver2
     GROUP BY f_device
 ''', engine).set_index('f_device')['f_name'].to_dict()
 
@@ -197,6 +197,6 @@ for i in range(1, 8):
 
 # 写入数据库
 df = pd.DataFrame(abnormal_data)
-df.to_sql('dj_mock_data', con=engine, if_exists='append', index=False)
+df.to_sql('dj_mock_data_ver2', con=engine, if_exists='append', index=False)
 
 print(f" 插入完成：{len(df)} 条，其中异常：{df[df.f_alarm == 1].shape[0]} 条")
